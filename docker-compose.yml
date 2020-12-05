@@ -1,0 +1,85 @@
+version: "3"
+
+services:
+  nginx:
+    build:
+      dockerfile: ./docker/nginx.dockerfile
+      context: .
+    image: ws-docker-must/nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+    networks:
+      - ws-docker-must-network
+    depends_on:
+      - "app1"
+      - "app2"
+  postgres-core:
+    build:
+      dockerfile: ./docker/db.dockerfile
+      context: .
+    image: ws-docker-must/postgres-core
+    container_name: "postgres-core"
+    environment:
+      POSTGRES_PASSWORD: 1020
+      POSTGRES_DB: "docker-teste"
+    networks:
+      - ws-docker-must-network
+    ports:
+      - "5432:5432"
+  pgadmin-compose:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "ws@zonesoft.org"
+      PGADMIN_DEFAULT_PASSWORD: "1020"
+    ports:
+      - "16543:80"
+    depends_on:
+      - postgres-core
+    networks:
+      - ws-docker-must-network
+  app1:
+    build:
+      dockerfile: ./docker/app.dockerfile
+      context: .
+    image: ws-docker-must/core
+    volumes:
+      - ./:/var/www
+    container_name: "ws-app-1"
+    ports:
+      - "3001"
+    networks:
+      - ws-docker-must-network
+    depends_on:
+      - "postgres-core"
+  app2:
+    build:
+      dockerfile: ./docker/app.dockerfile
+      context: .
+    image: ws-docker-must/core
+    volumes:
+      - ./:/var/www
+    container_name: "ws-app-2"
+    ports:
+      - "3001"
+    networks:
+      - ws-docker-must-network
+    depends_on:
+      - "postgres-core"
+  api:
+    build:
+      dockerfile: ./docker/app.dockerfile
+      context: .
+    image: ws-docker-must/core
+    volumes:
+      - ./:/var/www
+    container_name: "api"
+    ports:
+      - "3002:3001"
+    networks:
+      - ws-docker-must-network
+    depends_on:
+      - "postgres-core"
+networks:
+  ws-docker-must-network:
+    driver: bridge
